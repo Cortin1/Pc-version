@@ -1,0 +1,91 @@
+name: Build Windows editions
+
+on:
+  workflow_dispatch:
+
+env:
+  SOURCE_ZIP_URL: https://github.com/Cortin1/Pc-version/releases/download/v1/pharmastock-pc-windows-source-upgraded.zip
+
+jobs:
+  build-modern:
+    name: Modern Windows (Electron 38)
+    runs-on: windows-latest
+    steps:
+      - name: Download and extract source
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "$env:SOURCE_ZIP_URL" -OutFile project.zip
+          Expand-Archive -Path project.zip -DestinationPath extracted
+          Get-ChildItem extracted
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        working-directory: extracted/pharmastock-pc
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build web assets
+        working-directory: extracted/pharmastock-pc
+        run: pnpm build
+
+      - name: Package portable .exe
+        working-directory: extracted/pharmastock-pc
+        run: pnpm exec electron-builder --win portable
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PharmaStock-Pro-Windows
+          path: extracted/pharmastock-pc/release/*.exe
+
+  build-win7:
+    name: Windows 7 edition (Electron 22)
+    runs-on: windows-latest
+    steps:
+      - name: Download and extract source
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "$env:SOURCE_ZIP_URL" -OutFile project.zip
+          Expand-Archive -Path project.zip -DestinationPath extracted
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        working-directory: extracted/pharmastock-pc
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build web assets
+        working-directory: extracted/pharmastock-pc
+        run: pnpm build
+
+      - name: Refresh win7-build workspace
+        shell: pwsh
+        working-directory: extracted/pharmastock-pc
+        run: |
+          Remove-Item -Recurse -Force win7-build\dist -ErrorAction SilentlyContinue
+          Copy-Item -Recurse dist win7-build\dist
+          Copy-Item electron.cjs, preload.cjs, database.cjs win7-build\
+
+      - name: Install win7-build dependencies
+        working-directory: extracted/pharmastock-pc/win7-build
+        run: npm install
+
+      - name: Package Windows 7 installer + portable .exe
+        working-directory: extracted/pharmastock-pc/win7-build
+        run: npx electron-builder --win
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PharmaStock-Pro-Windows7
+          path: |
+            extracted/pharmastock-pc/win7-build/release-win7/*.exe
+            extracted/pharmastock-pc/win7-build/release-win7/*.msi
