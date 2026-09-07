@@ -71,6 +71,23 @@ jobs:
         shell: pwsh
         working-directory: extracted/pharmastock-pc
         run: |
-          Remove-Item -Recurse -Force win7-build\dist -ErrorAction SilentlyContinue
-          Copy-Item -Recurse dist win7-build\dist
-          Copy-Ite
+          Remove-Item -Recurse -Force win7-build/dist -ErrorAction SilentlyContinue
+          Copy-Item -Recurse dist win7-build/dist
+          Copy-Item electron.cjs win7-build/electron.cjs
+          Copy-Item preload.cjs win7-build/preload.cjs
+          Copy-Item database.cjs win7-build/database.cjs
+
+      - name: Install win7-build dependencies
+        working-directory: extracted/pharmastock-pc/win7-build
+        run: npm install
+
+      - name: Package Windows 7 installer + portable .exe
+        working-directory: extracted/pharmastock-pc/win7-build
+        run: npx electron-builder --win
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PharmaStock-Pro-Windows7
+          path: |
+            extracted/pharmastock-pc/win7-build/release-win7/*.exe
+            extracted/pharmastock-pc/win7-build/release-win7/*.msi
