@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  SOURCE_ZIP_URL: https://github.com/Cortin1/Pc-version/releases/download/v6/pharmastock-pc-final-v6.zip
+  SOURCE_ZIP_URL: https://github.com/Cortin1/Pc-version/releases/download/v7/pharmastock-pc-v6-complete.zip
 
 jobs:
   build-modern:
